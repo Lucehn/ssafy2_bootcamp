@@ -68,8 +68,8 @@ def result_update(filename):
     create_json(createdict, filename)
 
 def show_stats(text):
-    if text in "showsuccess":
-        tuplesort = make_tuple_sorted("success.join")
+    if "show_success" in text:
+        tuplesort = make_tuple_sorted("success.json")
     else:
         tuplesort = make_tuple_sorted("fail.json")
     result_dict = {}
@@ -104,7 +104,7 @@ def word_interpret(word):
     return translator.translate(word, src='en', dest='ko').text
 
 def length_check(word):
-    if len(word) > 130:
+    if len(word) > 100:
         return True
     else:
         return False
@@ -134,7 +134,7 @@ def output_result(isSuccess, message):
         result = ["*틀렸습니다!*"]
         result.append("정답은 *" + target + "*입니다")
     result.append(target + "의 의미는 [" + message + "] 입니다.")
-    result = result + ""<"" + mean + "|" + "자세히..." + ">"""
+    result = result + mean
     target = ""
     return result
 
@@ -164,7 +164,7 @@ def _crawl(text):
             mean.append(i.get_text())
     return ' '.join(mean)
 
-def search_word(text):
+def solve_word(text):
     global url, source_code, soup, target, quest_list
     total = []
     target = ""
@@ -223,7 +223,7 @@ def search_word(text):
 
         return '\n'.join(total)
     else:
-        return "문제풀기 : 'endict'\n정답top10보기 : 'showsuccess'\n오답top10보기 : 'showfail'"
+        return "문제풀기 : 'endict'\n단어찾기 : 'search_??'\n정답top10보기 : 'show_success'\n오답top10보기 : 'show_fail'"
 
 def answer_word(text):
     global target, quest_list
@@ -240,26 +240,34 @@ def answer_word(text):
     else:
         return  '\n'.join(output_result(False, message))
 
+def search_word(text):
+    try:
+        message = _crawl(text[20:].replace(" ", "%20"))
+    except IndexError:
+        return "찾을 수 없는 단어입니다."
+    result1 = []
+    result1.append(text[20:] + "의 의미는 [" + message + "] 입니다.")
+    result1 = result1 + mean
+    return '\n'.join(result1)
+
 @slack_events_adaptor.on("app_mention")
 def app_mentioned(event_data):
     channel = event_data["event"]["channel"]
     text = event_data["event"]["text"]
     global target, quest_list
-    #block1 = ImageBlock(image_url="https://www.google.com/search?q=%EC%82%AC%EC%A7%84&hl=ko&tbm=isch&source=iu&ictx=1&fir=2wdyILA0Zmx-fM%253A%252C5ISubKh2j_RsaM%252C_&vet=1&usg=AI4_-kQ8uhK4R40v3ieEJRoND9aOC6tq_g&sa=X&ved=2ahUKEwjv2oqura3jAhWJVrwKHWEFDuUQ9QEwBXoECAQQBA#imgrc=r_lTXSdLKmPwjM:&vet=1", alt_text="이미지가안뜰때보이는문구")
-    #block2 = ImageBlock(image_url="https://www.google.com/search?q=%EC%82%AC%EC%A7%84&hl=ko&tbm=isch&source=iu&ictx=1&fir=2wdyILA0Zmx-fM%253A%252C5ISubKh2j_RsaM%252C_&vet=1&usg=AI4_-kQ8uhK4R40v3ieEJRoND9aOC6tq_g&sa=X&ved=2ahUKEwjv2oqura3jAhWJVrwKHWEFDuUQ9QEwBXoECAQQBA#imgrc=lXJrh_Cvs_W8rM:&vet=1", alt_text="이미지가안뜰때보이는문구")
-    #my_blocks = [block1, block2]
 
-    if "showsuccess" in text or "showfail" in text:
+    if "show_success" in text or "show_fail" in text:
         message = show_stats(text)
-    elif target == "":
+    elif "search_" in text:
         message = search_word(text)
+    elif target == "":
+        message = solve_word(text)
     else:
         message = answer_word(text)
 
     slack_web_client.chat_postMessage(
         channel=channel,
         text=message,
-        #blocks=extract_json(my_blocks)
     )
 
 @app.route("/", methods=["GET"])
