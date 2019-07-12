@@ -27,8 +27,8 @@ from slackeventsapi import SlackEventAdapter
 
 # nltk.download('all')
 
-SLACK_TOKEN = "xoxb-683333830481-678287587427-XvqbGu1CUZzXnmzrAbOKrNzg"
-SLACK_SIGNING_SECRET = "4c629ba3d6c5dc477b853b54c59379b1"
+SLACK_TOKEN = 
+SLACK_SIGNING_SECRET = 
 
 app = Flask(__name__)
 slack_events_adaptor = SlackEventAdapter(SLACK_SIGNING_SECRET, "/listening", app)
